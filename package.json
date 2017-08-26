@@ -1,0 +1,15 @@
+{
+  "name": "lifta-node",
+  "version": "0.0.1",
+  "description": "Asynchronous event arrows for node EventEmitter",
+  "main": "liftA-node.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bill Enright",
+  "license": "MIT",
+  "dependencies": {
+    "lifta": "0.0.1",
+    "superagent": "^3.6.0"
+  }
+}
