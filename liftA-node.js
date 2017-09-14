@@ -42,15 +42,18 @@ let eventEmitterArrow = (emitter, name) => (x, cont, p) => {
 // assumes payload is an object
 let eventPropertyEmitterArrow = (emitter, name, property, value) => (x, cont, p) => {
 	let cancelId,
-		listener = (e) => {
-			console.log('event: ', name, ' payload: ', e);
-			if (e[property] === value) {
-				p.advance(cancelId);
-				emitter.removeListener(name, listener);
-				cont(e, p);
-			}
-		};
-	cancelId = p.add(() => emitter.removeListener(name, listener));
+		listener,
+		remove = () => emitter.removeListener(name, listener);
+
+	listener = (e) => {
+		console.log('event: ', name, ' payload: ', e);
+		if (e[property] === value) {
+			p.advance(cancelId);
+			remove();
+			cont(e, p);
+		}
+	};
+	cancelId = p.add(remove);
 	emitter.addListener(name, listener);
 	return cancelId;
 }
