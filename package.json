@@ -9,7 +9,6 @@
   "author": "Bill Enright",
   "license": "MIT",
   "dependencies": {
-    "lifta": "0.0.3",
-    "superagent": "^3.6.0"
+    "lifta": "0.0.3"
   }
 }
