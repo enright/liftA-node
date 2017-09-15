@@ -26,7 +26,7 @@ let aea = require('liftA')();
 
 // node.js event emitter arrow
 // one-shot listen for an event
-let eventEmitterArrow = (emitter, name) => (x, cont, p) => {
+let eventEmitterA = (emitter, name) => (x, cont, p) => {
 	let cancelId,
 		listener = (e) => {
 			console.log('event: ', name, ' payload: ', e);
@@ -40,7 +40,7 @@ let eventEmitterArrow = (emitter, name) => (x, cont, p) => {
 
 // keep listening until an event that contains property value occurs
 // assumes payload is an object
-let eventPropertyEmitterArrow = (emitter, name, property, value) => (x, cont, p) => {
+let eventPropertyEmitterA = (emitter, name, property, value) => (x, cont, p) => {
 	let cancelId,
 		listener,
 		remove = () => emitter.removeListener(name, listener);
@@ -58,8 +58,8 @@ let eventPropertyEmitterArrow = (emitter, name, property, value) => (x, cont, p)
 	return cancelId;
 }
 aea.node = {
-	eventEmitterArrow: eventEmitterArrow,
-	eventPropertyEmitterArrow: eventPropertyEmitterArrow
+	eventEmitterA: eventEmitterA,
+	eventPropertyEmitterA: eventPropertyEmitterA
 };
 
 module.exports = aea;
