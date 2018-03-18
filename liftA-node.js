@@ -22,31 +22,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-let aea = require('liftA')();
-
 // node.js event emitter arrow
 // one-shot listen for an event
 let eventEmitterA = (emitter, name) => (x, cont, p) => {
 	let cancelId,
 		listener = (e) => {
-			console.log('event: ', name, ' payload: ', e);
 			p.advance(cancelId);
 			cont(e, p);
 		};
 	cancelId = p.add(() => emitter.removeListener(name, listener));
 	emitter.once(name, listener);
 	return cancelId;
-}
+};
 
 // keep listening until an event that contains property value occurs
 // assumes payload is an object
 let eventPropertyEmitterA = (emitter, name, property, value) => (x, cont, p) => {
 	let cancelId,
 		listener,
-		remove = () => emitter.removeListener(name, listener);
-
+		remove = () => {
+			emitter.removeListener(name, listener);
+		};
 	listener = (e) => {
-		console.log('event: ', name, ' payload: ', e);
 		if (e[property] === value) {
 			p.advance(cancelId);
 			remove();
@@ -56,10 +53,9 @@ let eventPropertyEmitterA = (emitter, name, property, value) => (x, cont, p) => 
 	cancelId = p.add(remove);
 	emitter.addListener(name, listener);
 	return cancelId;
-}
-aea.node = {
+};
+
+module.exports = {
 	eventEmitterA: eventEmitterA,
 	eventPropertyEmitterA: eventPropertyEmitterA
 };
-
-module.exports = aea;

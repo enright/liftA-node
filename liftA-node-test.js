@@ -1,20 +1,73 @@
+aea = require('lifta')();
 naea = require('./liftA-node');
 
 //const EventEmitter = require('events');
 //const myevents = new EventEmitter();
 const myevents = new (require('events'))();
 
-// test emitter with no property value combo
-let emitterTest = naea.thenA(naea.firstA(naea.node.eventEmitterA(myevents, 'fred')), (x) => console.log('done ', x));
-setTimeout(() => { myevents.emit('fred', 25, 'dog') }, 3000);
-let emitterCancel = emitterTest([1, 'amazing'], () => {}, naea.p);
-//setTimeout(() => { p.cancel(emitterCancel) }, 1500);
+// a utility function that takes a label and
+// creates an arrow that log x to the console
+// and continue with x
+let consoleLogX = (label) => ((x) => {
+  console.log(label, x);
+  return x;
+}).liftA();
+
+// this arrow, when run, will wait for the event 'fred' to be fired
+// it will then log the event to the console
+// note that it operates on the first of a pair
+// this is all construction...the arrow is not running yet
+let emitterTest = naea.eventEmitterA(myevents, 'fred')
+  .thenA(consoleLogX('emit fred:'))
+  .firstA();
+
+// in three seconds, emit the fred event
+setTimeout(() => { myevents.emit('fred', 25, 'dog'); }, 3000);
+
+// run the fred emitter arrow with a pair [1, 'amazing']
+// the arrow only operates on the first of the pair
+// when the arrow completes, we will see that the second of the pair is preserved
+let emitterCancel = emitterTest([1, 'amazing'], (x) => {
+  console.log('fred event arrow completed x: ', x);
+}, aea.p);
 
 const myevents2 = new (require('events'))();
 
 // test emitter with property and value
-let emitterTest2 = naea.thenA(naea.firstA(naea.node.eventPropertyEmitterA(myevents2, 'fred', 'bing', 'bang')), (x) => console.log('done ', x));
-setTimeout(() => { myevents2.emit('fred', {'ding': 'dang'}) }, 2000);
-setTimeout(() => { myevents2.emit('fred', {'bing': 'bang'}) }, 2900);
-let emitterCancel2 = emitterTest2([1, 'real cool'], () => {}, naea.p);
-//setTimeout(() => { p.cancel(emitterCancel2) }, 1500);
+let emitterTest2 = naea.eventPropertyEmitterA(myevents2, 'frodo', 'bing', 'bang')
+  .thenA(consoleLogX('emitted frodo'))
+  .firstA();
+
+// the first event will be ignored (we are not looking for 'ding')
+// the second event will be ignored (we are not looking for a value of 'dang')
+// the third event will progress the arrow
+setTimeout(() => { myevents2.emit('frodo', {'ding': 'dang'}); }, 2000);
+setTimeout(() => { myevents2.emit('frodo', {'bing': 'dang'}); }, 2500);
+setTimeout(() => { myevents2.emit('frodo', {'bing': 'bang'}); }, 2900);
+let test2p = aea.P();
+emitterTest2([1, 'real cool'], (x) => {
+  console.log('frodo-bing-bang event arrow completed x: ', x);
+}, test2p);
+//setTimeout(() => test2p.cancelAll(), 1500);
+
+const myevents3 = new (require('events'))();
+
+// repeat with an emitter - it keeps going...
+let emitterTest3 = naea.eventPropertyEmitterA(myevents3, 'ferris', 'knick', 'knack')
+  .thenA(consoleLogX('ferris'))
+  .firstA()
+  .thenA(aea.justRepeatA)
+  .repeatA();
+
+setTimeout(() => { myevents3.emit('ferris', {'ding': 'dang'}); }, 2000);
+setTimeout(() => { myevents3.emit('ferris', {'knick': 'knack'}); }, 4000);
+setTimeout(() => { myevents3.emit('ferris', {'knick': 'bang'}); }, 5000);
+setTimeout(() => { myevents3.emit('ferris', {'knick': 'knack'}); }, 6000);
+setTimeout(() => { myevents3.emit('ferris', {'knick': 'knack'}); }, 8500);
+setTimeout(() => { myevents3.emit('ferris', {'knick': 'knack'}); }, 9000);
+let test3p = aea.P();
+emitterTest3([1, 'real cool'], () => {}, test3p);
+setTimeout(() => {
+  console.log('cancel the knick-knack arrow');
+  test3p.cancelAll();
+}, 8000);
