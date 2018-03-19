@@ -55,7 +55,44 @@ let eventPropertyEmitterA = (emitter, name, property, value) => (x, cont, p) => 
 	return cancelId;
 };
 
+let eventA = (x, cont, p) => {
+	let cancelId,
+		name = x.first(),
+		emitter = x.second(),
+		listener = (e) => {
+			p.advance(cancelId);
+			cont([e, emitter], p);
+		};
+	cancelId = p.add(() => emitter.removeListener(name, listener));
+	emitter.once(name, listener);
+	return cancelId;
+};
+
+let eventValueA = (x, cont, p) => {
+	let cancelId,
+		name = x.first().name,
+		property = x.first().property,
+		value = x.first().value,
+		emitter = x.second(),
+		listener,
+		remove = () => {
+			emitter.removeListener(name, listener);
+		};
+	listener = (e) => {
+		if (e[property] === value) {
+			p.advance(cancelId);
+			remove();
+			cont([e, emitter], p);
+		}
+	};
+	cancelId = p.add(remove);
+	emitter.addListener(name, listener);
+	return cancelId;
+};
+
 module.exports = {
+	eventA: eventA,
+	eventValueA: eventValueA,
 	eventEmitterA: eventEmitterA,
 	eventPropertyEmitterA: eventPropertyEmitterA
 };

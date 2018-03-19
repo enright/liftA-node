@@ -71,3 +71,21 @@ setTimeout(() => {
   console.log('cancel the knick-knack arrow');
   test3p.cancelAll();
 }, 8000);
+
+const eventATestEvents = new (require('events'))();
+let eventATest =
+  aea.constA(['fred', eventATestEvents])
+  .thenA(naea.eventA)
+  .thenA(consoleLogX('emit fred:'))
+  .runA();
+eventATestEvents.emit('dave', { 'one': 1 });
+eventATestEvents.emit('fred', [3, 4, 5]);
+
+let eventValueATest =
+  aea.constA([{ name: 'dave', property: 'buster', value: 3 }, eventATestEvents])
+  .thenA(naea.eventValueA)
+  .thenA(consoleLogX('emit fred:'))
+  .runA();
+eventATestEvents.emit('dave', { 'buster': 1 });
+eventATestEvents.emit('dave', { 'bluster': 3 });
+eventATestEvents.emit('dave', { 'buster': 3 });
