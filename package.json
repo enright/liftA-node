@@ -12,6 +12,6 @@
   "author": "Bill Enright",
   "license": "MIT",
   "devDependencies": {
-    "lifta": "0.0.9"
+    "lifta": "0.0.12"
   }
 }
