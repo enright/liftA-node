@@ -6,9 +6,9 @@ naea = require('./liftA-node');
 const myevents = new (require('events'))();
 
 // a utility function that takes a label and
-// creates an arrow that log x to the console
-// and continue with x
-let consoleLogX = (label) => ((x) => {
+// creates an arrow that logs x to the console
+// and continues with x
+let consoleLogXA = (label) => ((x) => {
   console.log(label, x);
   return x;
 }).liftA();
@@ -18,7 +18,7 @@ let consoleLogX = (label) => ((x) => {
 // note that it operates on the first of a pair
 // this is all construction...the arrow is not running yet
 let emitterTest = naea.eventEmitterA(myevents, 'fred')
-  .thenA(consoleLogX('emit fred:'))
+  .thenA(consoleLogXA('emit fred:'))
   .firstA();
 
 // in three seconds, emit the fred event
@@ -35,7 +35,7 @@ const myevents2 = new (require('events'))();
 
 // test emitter with property and value
 let emitterTest2 = naea.eventPropertyEmitterA(myevents2, 'frodo', 'bing', 'bang')
-  .thenA(consoleLogX('emitted frodo'))
+  .thenA(consoleLogXA('emitted frodo'))
   .firstA();
 
 // the first event will be ignored (we are not looking for 'ding')
@@ -54,7 +54,7 @@ const myevents3 = new (require('events'))();
 
 // repeat with an emitter - it keeps going...
 let emitterTest3 = naea.eventPropertyEmitterA(myevents3, 'ferris', 'knick', 'knack')
-  .thenA(consoleLogX('ferris'))
+  .thenA(consoleLogXA('ferris'))
   .firstA()
   .thenA(aea.justRepeatA)
   .repeatA();
@@ -76,7 +76,7 @@ const eventATestEvents = new (require('events'))();
 let eventATest =
   aea.constA(['fred', eventATestEvents])
   .thenA(naea.eventA)
-  .thenA(consoleLogX('emit fred:'))
+  .thenA(consoleLogXA('emit fred:'))
   .runA();
 eventATestEvents.emit('dave', { 'one': 1 });
 eventATestEvents.emit('fred', [3, 4, 5]);
@@ -84,7 +84,7 @@ eventATestEvents.emit('fred', [3, 4, 5]);
 let eventValueATest =
   aea.constA([{ name: 'dave', property: 'buster', value: 3 }, eventATestEvents])
   .thenA(naea.eventValueA)
-  .thenA(consoleLogX('emit fred:'))
+  .thenA(consoleLogXA('emit fred:'))
   .runA();
 eventATestEvents.emit('dave', { 'buster': 1 });
 eventATestEvents.emit('dave', { 'bluster': 3 });
