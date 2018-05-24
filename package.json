@@ -1,6 +1,6 @@
 {
   "name": "lifta-node",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Asynchronous event arrows for node EventEmitter",
   "main": "liftA-node.js",
   "scripts": {
@@ -12,6 +12,6 @@
   "author": "Bill Enright",
   "license": "MIT",
   "devDependencies": {
-    "lifta": "0.0.12"
+    "lifta": "0.0.15"
   }
 }
