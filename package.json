@@ -1,10 +1,10 @@
 {
   "name": "lifta-node",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "Asynchronous event arrows for node EventEmitter",
   "main": "liftA-node.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha liftA-node-test.js"
   },
   "jshintConfig": {
     "esversion": 6
@@ -12,6 +12,8 @@
   "author": "Bill Enright",
   "license": "MIT",
   "devDependencies": {
-    "lifta": "0.0.15"
+    "chai": "^4.2.0",
+    "lifta-syntax": "1.0.0",
+    "lolex": "^3.0.0"
   }
 }

@@ -1,141 +1,181 @@
-aea = require('lifta')();
-naea = require('./liftA-node');
+/* globals require,describe,it,setTimeout,clearTimeout */
+"use strict"; // enables proper tail calls (PTC) in Node 6 harmony
 
-//const EventEmitter = require('events');
-//const myevents = new EventEmitter();
-const myevents = new(require('events'))();
+// mocha tests
+const lifta = require('lifta-syntax');
+const expect = require('chai').expect;
+const lolex = require('lolex');
+const myevents = require('events');
 
-// a utility function that takes a label and
-// creates an arrow that logs x to the console
-// and continues with x
-let consoleLogXA = (label) => ((x) => {
-  console.log(label, x);
-  return x;
-}).A;
+const liftaNode = require('./liftA-node');
+let freeze = Object.freeze;
 
-// this arrow, when run, will wait for the event 'fred' to be fired
-// it will then log the event to the console
-// note that it operates on the first of a pair
-// this is all construction...the arrow is not running yet
-let emitterTest = naea.eventEmitterA(myevents, 'fred')
-  .thenA(consoleLogXA('emit fred:'))
-  .first;
-
-// in three seconds, emit the fred event
-setTimeout(() => {
-  myevents.emit('fred', 25, 'dog');
-}, 3000);
-
-// run the fred emitter arrow with a pair [1, 'amazing']
-// the arrow only operates on the first of the pair
-// when the arrow completes, we will see that the second of the pair is preserved
-let emitterCancel = emitterTest([1, 'amazing'], (x) => {
-  console.log('fred event arrow completed x: ', x);
-}, aea.p);
-
-const myevents2 = new(require('events'))();
-
-// test emitter with property and value
-let emitterTest2 = naea.eventPropertyEmitterA(myevents2, 'frodo', 'bing', 'bang')
-  .thenA(consoleLogXA('emitted frodo'))
-  .first;
-
-// the first event will be ignored (we are not looking for 'ding')
-// the second event will be ignored (we are not looking for a value of 'dang')
-// the third event will progress the arrow
-setTimeout(() => {
-  myevents2.emit('frodo', {
-    'ding': 'dang'
+describe('eventEmitterA', () => {
+  it('continues with an event value', (done) => {
+    const emitter = new myevents();
+    const name = 'fred';
+    liftaNode.eventEmitterA(freeze({
+      emitter,
+      name
+    }), (e) => {
+      expect(e).equal(25);
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      emitter.emit('fred', 25, 'dog');
+    }, 0);
   });
-}, 2000);
-setTimeout(() => {
-  myevents2.emit('frodo', {
-    'bing': 'dang'
+  it('continues with a frozen event if event is an object', (done) => {
+    const emitter = new myevents();
+    const name = 'fred';
+    liftaNode.eventEmitterA(freeze({
+      emitter,
+      name
+    }), (e) => {
+      expect(e).is.frozen;
+      expect(e.value).equal(25);
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      emitter.emit('fred', {
+        value: 25,
+        somethingElse: 'something'
+      });
+    }, 0);
   });
-}, 2500);
-setTimeout(() => {
-  myevents2.emit('frodo', {
-    'bing': 'bang'
-  });
-}, 2900);
-let test2p = aea.P();
-emitterTest2([1, 'real cool'], (x) => {
-  console.log('frodo-bing-bang event arrow completed x: ', x);
-}, test2p);
-//setTimeout(() => test2p.cancelAll(), 1500);
-
-const myevents3 = new(require('events'))();
-
-// repeat with an emitter - it keeps going...
-let emitterTest3 = naea.eventPropertyEmitterA(myevents3, 'ferris', 'knick', 'knack')
-  .thenA(consoleLogXA('ferris'))
-  .first
-  .thenA(aea.justRepeatA)
-  .repeat;
-
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'ding': 'dang'
-  });
-}, 2000);
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'knick': 'knack'
-  });
-}, 4000);
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'knick': 'bang'
-  });
-}, 5000);
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'knick': 'knack'
-  });
-}, 6000);
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'knick': 'knack'
-  });
-}, 8500);
-setTimeout(() => {
-  myevents3.emit('ferris', {
-    'knick': 'knack'
-  });
-}, 9000);
-let test3p = aea.P();
-emitterTest3([1, 'real cool'], () => {}, test3p);
-setTimeout(() => {
-  console.log('cancel the knick-knack arrow');
-  test3p.cancelAll();
-}, 8000);
-
-const eventATestEvents = new(require('events'))();
-let eventATest =
-  aea.constA(['fred', eventATestEvents])
-  .thenA(naea.eventA)
-  .thenA(consoleLogXA('emit fred:'))
-  .runA();
-eventATestEvents.emit('dave', {
-  'one': 1
 });
-eventATestEvents.emit('fred', [3, 4, 5]);
 
-let eventValueATest =
-  aea.constA([{
-    name: 'dave',
-    property: 'buster',
-    value: 3
-  }, eventATestEvents])
-  .thenA(naea.eventValueA)
-  .thenA(consoleLogXA('emit fred:'))
-  .runA();
-eventATestEvents.emit('dave', {
-  'buster': 1
+describe('eventPropertyEmitterA', () => {
+  it('continues with an event containing a specific property value', (done) => {
+    const emitter = new myevents();
+    const name = 'fred';
+    const property = 'a property';
+    const value = 'this value';
+    const x = {
+      emitter,
+      name,
+      property,
+      value
+    };
+    let clock = lolex.install();
+
+    liftaNode.eventPropertyEmitterA(freeze(x), (x) => {
+      expect(x).is.frozen;
+      expect(x[property]).equal(value);
+      clock.uninstall();
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      // emit an unmatching property value
+      emitter.emit('fred', {
+        [property]: 34
+      });
+    }, 1);
+    setTimeout(() => {
+      // emit an object which doesn't have the property
+      emitter.emit('fred', {
+        dontcare: 67
+      });
+    }, 2);
+    setTimeout(() => {
+      // emit the matching property value
+      emitter.emit('fred', {
+        [property]: value
+      });
+    }, 3);
+    clock.runAll();
+  });
 });
-eventATestEvents.emit('dave', {
-  'bluster': 3
+
+describe('eventA', () => {
+  it('continues with an event', (done) => {
+    const name = 'fred';
+    const emitter = new myevents();
+    const first = freeze({
+      name
+    });
+    const second = freeze({
+      emitter
+    });
+    const x = freeze([first, second]);
+    liftaNode.eventA(x, (x) => {
+      expect(x.first).equal(25);
+      expect(x.second).equal(second);
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      emitter.emit('fred', 25, 'dog');
+    }, 0);
+  });
+  it('continues with a frozen event if event is an object', (done) => {
+    const name = 'fred';
+    const emitter = new myevents();
+    const first = freeze({
+      name
+    });
+    const second = freeze({
+      emitter
+    });
+    const x = freeze([first, second]);
+    liftaNode.eventA(x, (x) => {
+      expect(x).is.frozen;
+      expect(x.first).is.frozen;
+      expect(x.first.value).equal(25);
+      expect(x.second).equal(second);
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      emitter.emit('fred', {
+        value: 25,
+        somethingElse: 'hmmm'
+      });
+    }, 0);
+  });
 });
-eventATestEvents.emit('dave', {
-  'buster': 3
+
+describe('eventPropertyA', () => {
+  it('continues with an event containing a specific property value', (done) => {
+    const name = 'fred';
+    const property = 'a property';
+    const value = 'this value';
+    const emitter = new myevents();
+    const first = freeze({
+      name,
+      property,
+      value
+    });
+    const second = freeze({
+      emitter
+    });
+    const x = freeze([first, second]);
+    let clock = lolex.install();
+
+    liftaNode.eventPropertyA(x, (x) => {
+      expect(x).is.frozen;
+      expect(x.first).is.frozen;
+      expect(x.first[property]).equal(value);
+      expect(x.second).equal(second);
+      clock.uninstall();
+      done();
+    }, lifta.P());
+    setTimeout(() => {
+      // emit an unmatching property value
+      emitter.emit('fred', {
+        [property]: 34
+      });
+    }, 1);
+    setTimeout(() => {
+      // emit an object which doesn't have the property
+      emitter.emit('fred', {
+        dontcare: 67
+      });
+    }, 2);
+    setTimeout(() => {
+      // emit the matching property value
+      emitter.emit('fred', {
+        [property]: value
+      });
+    }, 3);
+    clock.runAll();
+  });
 });
