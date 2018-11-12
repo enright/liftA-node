@@ -43,6 +43,38 @@ describe('eventEmitterA', () => {
       });
     }, 0);
   });
+  it('can be cancelled', (done) => {
+    const emitter = new myevents();
+    const name = 'fred';
+    const x = {
+      emitter,
+      name
+    };
+    let clock = lolex.install();
+    let p = lifta.P();
+    liftaNode.eventEmitterA(freeze(x), (x) => {
+      // fail if we get here
+      clock.uninstall();
+      expect.fail();
+    }, p);
+    // cancel the arrow
+    setTimeout(() => {
+      p.cancelAll();
+    }, 1);
+    // emit the event
+    setTimeout(() => {
+      // emit an object which doesn't have the property
+      emitter.emit('fred', {
+        dontcare: 67
+      });
+    }, 2);
+    // we run this after the event, the event should not have progressed the arrow
+    setTimeout(() => {
+      clock.uninstall();
+      done();
+    }, 3);
+    clock.runAll();
+  });
 });
 
 describe('eventPropertyEmitterA', () => {
@@ -60,9 +92,9 @@ describe('eventPropertyEmitterA', () => {
     let clock = lolex.install();
 
     liftaNode.eventPropertyEmitterA(freeze(x), (x) => {
+      clock.uninstall();
       expect(x).is.frozen;
       expect(x[property]).equal(value);
-      clock.uninstall();
       done();
     }, lifta.P());
     setTimeout(() => {
@@ -82,6 +114,39 @@ describe('eventPropertyEmitterA', () => {
       emitter.emit('fred', {
         [property]: value
       });
+    }, 3);
+    clock.runAll();
+  });
+  it('can be cancelled', (done) => {
+    const emitter = new myevents();
+    const name = 'fred';
+    const property = 'a property';
+    const value = 'this value';
+    const x = {
+      emitter,
+      name,
+      property,
+      value
+    };
+    let clock = lolex.install();
+    let p = lifta.P();
+
+    liftaNode.eventPropertyEmitterA(freeze(x), (x) => {
+      clock.uninstall();
+      expect.fail();
+    }, p);
+    setTimeout(() => {
+      p.cancelAll();
+    }, 1);
+    setTimeout(() => {
+      // emit the matching property value
+      emitter.emit('fred', {
+        [property]: value
+      });
+    }, 2);
+    setTimeout(() => {
+      clock.uninstall();
+      done();
     }, 3);
     clock.runAll();
   });
@@ -131,6 +196,41 @@ describe('eventA', () => {
       });
     }, 0);
   });
+  it('can be cancelled', (done) => {
+    const name = 'fred';
+    const emitter = new myevents();
+    const first = freeze({
+      name
+    });
+    const second = freeze({
+      emitter
+    });
+    const x = freeze([first, second]);
+    let clock = lolex.install();
+    let p = lifta.P();
+
+    liftaNode.eventA(x, (x) => {
+      clock.uninstall();
+      expect.fail();
+    }, p);
+    // cancel the arrow
+    setTimeout(() => {
+      p.cancelAll();
+    }, 1);
+    // emit after cancel
+    setTimeout(() => {
+      emitter.emit('fred', {
+        value: 25,
+        somethingElse: 'hmmm'
+      });
+    }, 2);
+    // the arrow should not have progressed
+    setTimeout(() => {
+      clock.uninstall();
+      done();
+    }, 3);
+    clock.runAll();
+  });
 });
 
 describe('eventPropertyA', () => {
@@ -151,6 +251,7 @@ describe('eventPropertyA', () => {
     let clock = lolex.install();
 
     liftaNode.eventPropertyA(x, (x) => {
+      clock.uninstall();
       expect(x).is.frozen;
       expect(x.first).is.frozen;
       expect(x.first[property]).equal(value);
@@ -175,6 +276,42 @@ describe('eventPropertyA', () => {
       emitter.emit('fred', {
         [property]: value
       });
+    }, 3);
+    clock.runAll();
+  });
+  it('can be cancelled', (done) => {
+    const name = 'fred';
+    const property = 'a property';
+    const value = 'this value';
+    const emitter = new myevents();
+    const first = freeze({
+      name,
+      property,
+      value
+    });
+    const second = freeze({
+      emitter
+    });
+    const x = freeze([first, second]);
+    let clock = lolex.install();
+    let p = lifta.P();
+
+    liftaNode.eventPropertyA(x, (x) => {
+      clock.uninstall();
+      expect.fail();
+    }, p);
+    setTimeout(() => {
+      p.cancelAll();
+    }, 1);
+    setTimeout(() => {
+      // emit the matching property value
+      emitter.emit('fred', {
+        [property]: value
+      });
+    }, 2);
+    setTimeout(() => {
+      clock.uninstall();
+      done();
     }, 3);
     clock.runAll();
   });

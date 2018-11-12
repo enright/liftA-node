@@ -34,7 +34,7 @@ let eventEmitterA = (x, cont, p) => {
       p.advance(cancelId);
       cont(freeze(e), p);
     };
-  cancelId = p.add(() => x.emitter.removeListener(name, listener));
+  cancelId = p.add(() => x.emitter.removeListener(x.name, listener));
   x.emitter.once(x.name, listener);
 };
 

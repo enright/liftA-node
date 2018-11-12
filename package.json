@@ -1,6 +1,6 @@
 {
   "name": "lifta-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Asynchronous event arrows for node EventEmitter",
   "main": "liftA-node.js",
   "scripts": {
